@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Socket.IO chat</title>
+    <script src="https://cdn.socket.io/3.1.3/socket.io.min.js"
+        integrity="sha384-cPwlPLvBTa3sKAgddT6krw0cJat7egBga3DJepJyrLl4Q9/5WLra3rrnMcyTyOnh"
+        crossorigin="anonymous"></script>
+
+    <style>
+        body {
+            margin: 0;
+            padding-bottom: 3rem;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        #form {
+            background: rgba(0, 0, 0, 0.15);
+            padding: 0.25rem;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            height: 3rem;
+            box-sizing: border-box;
+            backdrop-filter: blur(10px);
+        }
+
+        #input {
+            border: none;
+            padding: 0 1rem;
+            flex-grow: 1;
+            border-radius: 2rem;
+            margin: 0.25rem;
+        }
+
+        #input:focus {
+            outline: none;
+        }
+
+        #form>button {
+            background: #333;
+            border: none;
+            padding: 0 1rem;
+            margin: 0.25rem;
+            border-radius: 3px;
+            outline: none;
+            color: #fff;
+        }
+
+        #messages {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        #messages>li {
+            padding: 0.5rem 1rem;
+        }
+
+        #messages>li:nth-child(odd) {
+            background: #efefef;
+        }
+    </style>
+</head>
+
+<body>
+    <ul id="messages"></ul>
+
+    <form id="form" onsubmit="(function(e){e.preventDefault()})">
+        <input id="input" autocomplete="off" />
+        <button id='sendbtn'>Send</button>
+        <button id='update_state'>Update</button>
+    </form>
+
+</body>
+
+</html>
+
+<script>
+    const domain = 'localhost'
+    const port = '5001'
+    let deviceSid = ''
+
+    document.addEventListener("DOMContentLoaded", function (event) {
+
+        var socket = io('http://' + domain + ':' + port + '/web', {
+            reconnection: false
+        });
+
+        socket.on('connect', () => {
+            console.log('Connected');
+        });
+
+        socket.on('disconnect', () => {
+            console.log('Disconnected');
+            socket.emit('leave')
+        });
+
+        socket.on('connect_error', (error) => {
+            console.log('Connect error! ' + error);
+        });
+
+        socket.on('connect_timeout', (error) => {
+            console.log('Connect timeout! ' + error);
+        });
+
+        socket.on('error', (error) => {
+            console.log('Error! ' + error);
+        });
+
+        socket.on('message', (data) => {
+            console.log('message', data)
+        })
+
+
+        socket.on('list_devices', (data) => {
+            console.log('list_devices', data)
+        })
+
+        socket.on('device_state', (data) => {
+            console.log('device_state', data)
+        })
+
+
+        document.getElementById('sendbtn').addEventListener('click', (e) => {
+            e.preventDefault()
+            deviceSid = document.getElementById('input').value
+            room = socket.emit("join", { deviceSid: document.getElementById('input').value })
+            console.log(room)
+        })
+
+        document.getElementById('update_state').addEventListener('click', (e) => {
+            e.preventDefault()
+            console.log("deviceSid", deviceSid)
+            socket.emit("update_state", { deviceSid, newState: { test: 'test data' } })
+        })
+
+
+    });
+</script>

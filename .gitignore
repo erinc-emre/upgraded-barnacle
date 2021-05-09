@@ -1,0 +1,5 @@
+svelte-frontend/.DS_Store
+svelte-frontend/node_modules
+svelte-frontend/public/build/bundle.*
+
+flask-server/env

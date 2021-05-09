@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" href="{{ url_for('static', filename = 'favicon.ico') }}">
+    <title>alwaysAI Video Streamer</title>
+
+    <!-- Socket IO
+  ================================================== -->
+    <script src="https://cdn.socket.io/3.1.3/socket.io.min.js"
+        integrity="sha384-cPwlPLvBTa3sKAgddT6krw0cJat7egBga3DJepJyrLl4Q9/5WLra3rrnMcyTyOnh"
+        crossorigin="anonymous"></script>
+
+    <!-- BSON Parsing
+  ================================================== -->
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/js-bson/2.0.8/bson.min.js" crossorigin="anonymous"></script> -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-bson/2.0.8/bson.js" crossorigin="anonymous"></script>
+
+    <!-- Bootstrap CSS
+  ================================================== -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+        integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous">
+        </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+        integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous">
+        </script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+        integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous">
+        </script>
+    <!-- Custom styles
+  ================================================== -->
+    <link href="https://fonts.googleapis.com/css?family=Karla&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f1f2f3;
+        }
+
+        .container {
+            max-width: 1024px;
+        }
+
+        .navbar-light .navbar-nav .nav-link,
+        .navbar-light .navbar-nav .nav-link:hover {
+            font-family: Karla;
+            font-size: 14px;
+            color: #000000;
+        }
+
+        .navbar-brand img {
+            width: 120px
+        }
+
+        .dash-sub-title h1 {
+            font-size: 16px;
+            font-weight: bold;
+            margin: 24px 0 8px 0;
+        }
+
+        .dash-sub-title h2 {
+            font-size: 14px;
+            margin: 8px 0 8px 0;
+        }
+
+        .card {
+            height: 480px;
+        }
+
+        .card-scroller {
+            overflow: scroll;
+            height: 420px;
+        }
+
+        .stop-button {
+            opacity: 1;
+            background: url(data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iMjRweCIgaGVpZ2h0PSIyNHB4IiB2aWV3Qm94PSIwIDAgMjQgMjQiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgICA8IS0tIEdlbmVyYXRvcjogU2tldGNoIDU3LjEgKDgzMDg4KSAtIGh0dHBzOi8vc2tldGNoLmNvbSAtLT4KICAgIDx0aXRsZT5Hcm91cEAxeDwvdGl0bGU+CiAgICA8ZGVzYz5DcmVhdGVkIHdpdGggU2tldGNoLjwvZGVzYz4KICAgIDxkZWZzPgogICAgICAgIDxwb2x5Z29uIGlkPSJwYXRoLTEiIHBvaW50cz0iNS45OTk5OTk5OCA1Ljk5OTk5OTk3IDE4IDUuOTk5OTk5OTcgMTggMTggNS45OTk5OTk5OCAxOCI+PC9wb2x5Z29uPgogICAgPC9kZWZzPgogICAgPGcgaWQ9IlN0cmVhbWVyIiBzdHJva2U9Im5vbmUiIHN0cm9rZS13aWR0aD0iMSIgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIj4KICAgICAgICA8ZyBpZD0iU3RyZWFtZXItRmluYWwtQ29weS00IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtNDE5LjAwMDAwMCwgLTE3OS4wMDAwMDApIj4KICAgICAgICAgICAgPGcgaWQ9Ikdyb3VwIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSg0MTkuMDAwMDAwLCAxNzkuMDAwMDAwKSI+CiAgICAgICAgICAgICAgICA8cmVjdCBpZD0iUmVjdGFuZ2xlIiBmaWxsPSIjRkZGRkZGIiB4PSIwIiB5PSIwIiB3aWR0aD0iMjQiIGhlaWdodD0iMjQiPjwvcmVjdD4KICAgICAgICAgICAgICAgIDxnIGlkPSJzdG9wIj4KICAgICAgICAgICAgICAgICAgICA8cG9seWdvbiBpZD0iQmFzZSIgcG9pbnRzPSItNS4wMDAwMDExMmUtMDggLTQuOTk5OTkyNmUtMDggMjQgLTQuOTk5OTkyNmUtMDggMjQgMjQuMDAwMDAwMSAtNS4wMDAwMDExMmUtMDggMjQuMDAwMDAwMSI+PC9wb2x5Z29uPgogICAgICAgICAgICAgICAgICAgIDxtYXNrIGlkPSJtYXNrLTIiIGZpbGw9IndoaXRlIj4KICAgICAgICAgICAgICAgICAgICAgICAgPHVzZSB4bGluazpocmVmPSIjcGF0aC0xIj48L3VzZT4KICAgICAgICAgICAgICAgICAgICA8L21hc2s+CiAgICAgICAgICAgICAgICAgICAgPGcgaWQ9Ikljb24iPjwvZz4KICAgICAgICAgICAgICAgICAgICA8cmVjdCBpZD0i4oazLfCfjqgtQ29sb3IiIGZpbGw9IiNGMjMwM0EiIGZpbGwtcnVsZT0iZXZlbm9kZCIgbWFzaz0idXJsKCNtYXNrLTIpIiB4PSIwIiB5PSIwIiB3aWR0aD0iMjQiIGhlaWdodD0iMjQiPjwvcmVjdD4KICAgICAgICAgICAgICAgIDwvZz4KICAgICAgICAgICAgPC9nPgogICAgICAgIDwvZz4KICAgIDwvZz4KPC9zdmc+) no-repeat;
+            cursor: pointer;
+            border: none;
+            width: 24px;
+            height: 24px;
+            float: right;
+        }
+
+        .stop-button:hover {
+            opacity: 0.75;
+        }
+
+        h5 {
+            border-bottom: solid 1px #d2d2d2;
+        }
+
+        ::-webkit-scrollbar {
+            -webkit-appearance: none;
+            width: 7px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            border-radius: 4px;
+            background-color: rgba(0, 0, 0, .5);
+            -webkit-box-shadow: 0 0 1px rgba(255, 255, 255, .5);
+        }
+    </style>
+</head>
+
+<body class="tos-bg">
+
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="collapse navbar-collapse" id="navbarText">
+            <span class="navbar-nav mr-auto"></span>
+
+            <ul class="navbar-nav ">
+
+            </ul>
+        </div>
+    </nav>
+    <div class="container" min-width="1024px" width="100%">
+
+        <div class="dash-sub-title">
+            <h1>IoT VideoStream PoC</h1>
+        </div>
+
+        <div class="card-deck">
+
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Debug Info</h5>
+                    <div class="card-scroller">
+                        <p id="streamer-text"></p>
+                    </div>
+                </div>
+            </div>
+
+            <div style="width: 70%">
+                <img id="streamer-image" src="">
+            </div>
+
+        </div>
+
+    </div>
+</body>
+
+</html>
+
+<script>
+    let _print = true
+    document.addEventListener("DOMContentLoaded", function (event) {
+        const image_elem = document.getElementById("streamer-image");
+        const text_elem = document.getElementById("streamer-text");
+
+        var socket = io.connect('http://' + document.domain + ':' + location.port + '/web', {
+            reconnection: false
+        });
+
+        socket.on('connect', () => {
+            console.log('Connected');
+        });
+
+        socket.on('disconnect', () => {
+            console.log('Disconnected');
+        });
+
+        socket.on('connect_error', (error) => {
+            console.log('Connect error! ' + error);
+        });
+
+        socket.on('connect_timeout', (error) => {
+            console.log('Connect timeout! ' + error);
+        });
+
+        socket.on('error', (error) => {
+            console.log('Error! ' + error);
+        });
+
+        // Update image and text data based on incoming data messages
+        socket.on('server2web', (msg) => {
+            if (_print) {
+                console.log(msg.image)
+                _print = false
+            }
+            // let imageUnicode = BSON.Binary(new Uint8Array(msg.image))
+            // let imageBase64 = btoa(String.fromCharCode.apply(null, imageUnicode.buffer))
+
+            image_elem.src = msg.image // "data:image/jpeg;base64," + //imageBase64
+            text_elem.innerHTML = msg.text//"Ping ms:" + (new Date() - new Date(`${msg.text}`.replace('.', '')));
+        });
+    });
+</script>
