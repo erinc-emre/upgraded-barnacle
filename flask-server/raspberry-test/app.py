@@ -22,6 +22,7 @@ sio = socketio.Client()
 lock = threading.Lock()
 lock.acquire(blocking=False)
 
+
 @sio.event(namespace='/device')
 def connect():
     print('[INFO] Successfully connected to server.')
@@ -36,30 +37,35 @@ def connect_error():
 def disconnect():
     print('[INFO] Disconnected from server.')
 
+
 @sio.event(namespace='/device')
 def web_client_connected(data):
     lock.release()
     print('web_client_connected', data)
+
 
 @sio.event(namespace='/device')
 def web_client_disconnected(data):
     lock.acquire(blocking=True)
     print('web_client_disconnected', data)
 
+
 @sio.event(namespace='/device')
 def video(data):
     print(data)
 
+
 device_info = {'device_name': 'camera_device'}
+
 
 class CVClient(object):
 
-    def __init__(self, server_addr, stream_fps=30):
+    def __init__(self, server_addr, stream_fps=60):
         self.server_addr = server_addr
         self.server_port = 5001
         self._stream_fps = stream_fps
         self._last_update_t = time.time()
-        self._wait_t = (1/self._stream_fps)
+        self._wait_t = (1/self._stream_fps)*3
 
     def create_room(self):
         sio.emit('join', device_info, '/device')
@@ -71,7 +77,7 @@ class CVClient(object):
             'http://{}:{}'.format(self.server_addr, self.server_port),
             transports=['websocket'],
             namespaces=['/device'],
-            wait=True, wait_timeout=10)
+            wait=True, wait_timeout=1)
         self.create_room()
         return self
 
@@ -80,7 +86,6 @@ class CVClient(object):
         frame = cv2.imencode('.jpg', image)[1].tobytes()
         # frame = bson.encode_binary(frame)
         return frame
-
 
     def send_image(self, name, frame):
         cur_t = time.time()
